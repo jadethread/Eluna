@@ -301,9 +301,9 @@ void Eluna::OnPlayerLeave(Map* map, Player* player)
 
 void Eluna::OnUpdate(Map* map, uint32 diff)
 {
+    eventMgr->UpdateGlobal(diff);
+
     START_HOOK(MAP_EVENT_ON_UPDATE);
-    // enable this for multithread
-    // eventMgr->globalProcessor->Update(diff);
     Push(map);
     Push(diff);
     CallAllFunctions(ServerEventBindings, key);

@@ -14,7 +14,7 @@ extern "C"
 #include "lauxlib.h"
 };
 
-void ElunaEventProcessor::Update(uint32 diff, WorldObject* obj)
+void ElunaEventProcessor::Update(uint32 diff, Eluna* E, WorldObject* obj)
 {
     m_time += diff;
     for (EventList::iterator it = eventList.begin(); it != eventList.end() && it->first <= m_time; it = eventList.begin())
@@ -29,14 +29,14 @@ void ElunaEventProcessor::Update(uint32 diff, WorldObject* obj)
                 AddEvent(luaEvent); // Reschedule before calling incase RemoveEvents used
 
             // Call the timed event
-            obj->GetMap()->GetEluna()->OnTimedEvent(luaEvent.funcRef, luaEvent.delay, luaEvent.repeats ? luaEvent.repeats-- : luaEvent.repeats, obj);
+            E->OnTimedEvent(luaEvent.funcRef, luaEvent.delay, luaEvent.repeats ? luaEvent.repeats-- : luaEvent.repeats, obj);
 
             if (!remove)
                 continue;
         }
 
         // Event should be deleted (executed last time or set to be aborted)
-        luaL_unref(obj->GetMap()->GetEluna()->L, LUA_REGISTRYINDEX, luaEvent.funcRef);
+        luaL_unref(E->L, LUA_REGISTRYINDEX, luaEvent.funcRef);
         eventMap.erase(luaEvent.funcRef);
     }
 }
@@ -100,7 +100,7 @@ void EventMgr::Update(uint32 diff, WorldObject* obj)
     auto it = processorMap.find(obj->GetGUID());
     if (it == processorMap.end())
         return;
-    it->second.Update(diff, obj);
+    it->second.Update(diff, owner, obj);
 
     if (it->second.eventMap.empty())
         processorMap.erase(it);
@@ -108,7 +108,7 @@ void EventMgr::Update(uint32 diff, WorldObject* obj)
 
 void EventMgr::UpdateGlobal(uint32 diff)
 {
-    globalProcessor.Update(diff, nullptr);
+    globalProcessor.Update(diff, owner, NULL);
 }
 
 void EventMgr::AddEvent(ObjectGuid guid, int funcRef, uint32 delay, uint32 repeats)

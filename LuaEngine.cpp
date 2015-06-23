@@ -145,7 +145,6 @@ GroupEventBindings(NULL),
 VehicleEventBindings(NULL),
 BGEventBindings(NULL),
 
-PacketEventBindings(NULL),
 CreatureEventBindings(NULL),
 CreatureGossipBindings(NULL),
 GameObjectEventBindings(NULL),
@@ -165,7 +164,7 @@ CreatureUniqueBindings(NULL)
 
     // Set event manager. Must be after setting sEluna
     // on multithread have a map of state pointers and here insert this pointer to the map and then save a pointer of that pointer to the EventMgr
-    eventMgr = new EventMgr();
+    eventMgr = new EventMgr(this);
 
     instances.Add(this);
 }
@@ -242,7 +241,6 @@ void Eluna::CreateBindStores()
     VehicleEventBindings     = new BindingMap< EventKey<Hooks::VehicleEvents> >(L);
     BGEventBindings          = new BindingMap< EventKey<Hooks::BGEvents> >(L);
 
-    PacketEventBindings      = new BindingMap< EntryKey<Hooks::PacketEvents> >(L);
     CreatureEventBindings    = new BindingMap< EntryKey<Hooks::CreatureEvents> >(L);
     CreatureGossipBindings   = new BindingMap< EntryKey<Hooks::GossipEvents> >(L);
     GameObjectEventBindings  = new BindingMap< EntryKey<Hooks::GameObjectEvents> >(L);
@@ -262,7 +260,6 @@ void Eluna::DestroyBindStores()
     delete GroupEventBindings;
     delete VehicleEventBindings;
 
-    delete PacketEventBindings;
     delete CreatureEventBindings;
     delete CreatureGossipBindings;
     delete GameObjectEventBindings;
@@ -280,7 +277,6 @@ void Eluna::DestroyBindStores()
     GroupEventBindings = NULL;
     VehicleEventBindings = NULL;
 
-    PacketEventBindings = NULL;
     CreatureEventBindings = NULL;
     CreatureGossipBindings = NULL;
     GameObjectEventBindings = NULL;
@@ -999,23 +995,6 @@ int Eluna::Register(lua_State* L, uint8 regtype, uint32 entry, uint64 guid, uint
                 auto key = EventKey<Hooks::BGEvents>((Hooks::BGEvents)event_id);
                 bindingID = BGEventBindings->Insert(key, functionRef, shots);
                 createCancelCallback(L, bindingID, BGEventBindings);
-                return 1; // Stack: callback
-            }
-            break;
-
-        case Hooks::REGTYPE_PACKET:
-            if (event_id < Hooks::PACKET_EVENT_COUNT)
-            {
-                if (entry >= NUM_MSG_TYPES)
-                {
-                    luaL_unref(L, LUA_REGISTRYINDEX, functionRef);
-                    luaL_error(L, "Couldn't find a creature with (ID: %d)!", entry);
-                    return 0; // Stack: (empty)
-                }
-
-                auto key = EntryKey<Hooks::PacketEvents>((Hooks::PacketEvents)event_id, entry);
-                bindingID = PacketEventBindings->Insert(key, functionRef, shots);
-                createCancelCallback(L, bindingID, PacketEventBindings);
                 return 1; // Stack: callback
             }
             break;

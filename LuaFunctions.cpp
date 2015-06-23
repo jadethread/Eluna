@@ -40,7 +40,6 @@ extern "C"
 ElunaGlobal::ElunaRegister GlobalMethods[] =
 {
     // Hooks
-    { "RegisterPacketEvent", &LuaGlobalFunctions::RegisterPacketEvent },                       // RegisterPacketEvent(opcodeID, event, function)
     { "RegisterServerEvent", &LuaGlobalFunctions::RegisterServerEvent },                       // RegisterServerEvent(event, function)
     { "RegisterPlayerEvent", &LuaGlobalFunctions::RegisterPlayerEvent },                       // RegisterPlayerEvent(event, function)
     { "RegisterGuildEvent", &LuaGlobalFunctions::RegisterGuildEvent },                         // RegisterGuildEvent(event, function)
@@ -65,7 +64,6 @@ ElunaGlobal::ElunaRegister GlobalMethods[] =
     { "ClearGuildEvents", &LuaGlobalFunctions::ClearGuildEvents },
     { "ClearItemEvents", &LuaGlobalFunctions::ClearItemEvents },
     { "ClearItemGossipEvents", &LuaGlobalFunctions::ClearItemGossipEvents },
-    { "ClearPacketEvents", &LuaGlobalFunctions::ClearPacketEvents },
     { "ClearPlayerEvents", &LuaGlobalFunctions::ClearPlayerEvents },
     { "ClearPlayerGossipEvents", &LuaGlobalFunctions::ClearPlayerGossipEvents },
     { "ClearServerEvents", &LuaGlobalFunctions::ClearServerEvents },

@@ -785,35 +785,6 @@ namespace LuaGlobalFunctions
     }
 
     /**
-     * Registers a [WorldPacket] event handler.
-     *
-     * <pre>
-     * enum PacketEvents
-     * {
-     *     PACKET_EVENT_ON_PACKET_RECEIVE          =     5,
-     *     PACKET_EVENT_ON_PACKET_RECEIVE_UNKNOWN  =     6,
-     *     PACKET_EVENT_ON_PACKET_SEND             =     7,
-     *
-     *     PACKET_EVENT_COUNT
-     * };
-     * </pre>
-     *
-     * @proto cancel = (entry, event, function)
-     * @proto cancel = (entry, event, function, shots)
-     *
-     * @param uint32 entry : opcode
-     * @param uint32 event : packet event Id, refer to PacketEvents above
-     * @param function function : function to register
-     * @param uint32 shots = 0 : the number of times the function will be called, 0 means "always call this function"
-     *
-     * @return function cancel : a function that cancels the binding when called
-     */
-    int RegisterPacketEvent(Eluna* E, lua_State* L)
-    {
-        return RegisterEntryHelper(E, L, Hooks::REGTYPE_PACKET);
-    }
-
-    /**
      * Registers a [Creature] gossip event handler.
      *
      * <pre>
@@ -2763,38 +2734,6 @@ namespace LuaGlobalFunctions
             uint32 entry = Eluna::CHECKVAL<uint32>(L, 1);
             uint32 event_type = Eluna::CHECKVAL<uint32>(L, 2);
             E->ItemGossipBindings->Clear(Key((Hooks::GossipEvents)event_type, entry));
-        }
-        return 0;
-    }
-
-    /**
-     * Unbinds event handlers for either all of a [WorldPacket] opcode's events, or one type of event.
-     *
-     * If `event_type` is `nil`, all the [WorldPacket] opcode's event handlers are cleared.
-     *
-     * Otherwise, only event handlers for `event_type` are cleared.
-     *
-     * @proto (opcode)
-     * @proto (opcode, event_type)
-     * @param uint32 opcode : the type of [WorldPacket] whose handlers will be cleared
-     * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterPacketEvent]
-     */
-    int ClearPacketEvents(Eluna* E, lua_State* L)
-    {
-        typedef EntryKey<Hooks::PacketEvents> Key;
-
-        if (lua_isnoneornil(L, 2))
-        {
-            uint32 entry = Eluna::CHECKVAL<uint32>(L, 1);
-
-            for (uint32 i = 1; i < Hooks::PACKET_EVENT_COUNT; ++i)
-                E->PacketEventBindings->Clear(Key((Hooks::PacketEvents)i, entry));
-        }
-        else
-        {
-            uint32 entry = Eluna::CHECKVAL<uint32>(L, 1);
-            uint32 event_type = Eluna::CHECKVAL<uint32>(L, 2);
-            E->PacketEventBindings->Clear(Key((Hooks::PacketEvents)event_type, entry));
         }
         return 0;
     }

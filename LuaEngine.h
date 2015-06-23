@@ -224,7 +224,6 @@ public:
     BindingMap< EventKey<Hooks::VehicleEvents> >*    VehicleEventBindings;
     BindingMap< EventKey<Hooks::BGEvents> >*         BGEventBindings;
 
-    BindingMap< EntryKey<Hooks::PacketEvents> >*     PacketEventBindings;
     BindingMap< EntryKey<Hooks::CreatureEvents> >*   CreatureEventBindings;
     BindingMap< EntryKey<Hooks::GossipEvents> >*     CreatureGossipBindings;
     BindingMap< EntryKey<Hooks::GameObjectEvents> >* GameObjectEventBindings;
@@ -384,14 +383,6 @@ public:
     void OnGameObjectStateChanged(GameObject* pGameObject, uint32 state);
     void UpdateAI(GameObject* pGameObject, uint32 diff);
     void OnSpawn(GameObject* gameobject);
-
-    /* Packet */
-    bool OnPacketSend(WorldSession* session, WorldPacket& packet);
-    void OnPacketSendAny(Player* player, WorldPacket& packet, bool& result);
-    void OnPacketSendOne(Player* player, WorldPacket& packet, bool& result);
-    bool OnPacketReceive(WorldSession* session, WorldPacket& packet);
-    void OnPacketReceiveAny(Player* player, WorldPacket& packet, bool& result);
-    void OnPacketReceiveOne(Player* player, WorldPacket& packet, bool& result);
 
     /* Player */
     void OnPlayerEnterCombat(Player* pPlayer, Unit* pEnemy);

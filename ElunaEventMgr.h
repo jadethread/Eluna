@@ -48,7 +48,8 @@ public:
 
     ElunaEventProcessor() : m_time(0) { }
 
-    void Update(uint32 diff, WorldObject* obj);
+    // obj can be NULL for global events
+    void Update(uint32 diff, Eluna* E, WorldObject* obj);
     void AddEvent(LuaEvent const& luaEvent);
     void AddEvent(int funcRef, uint32 delay, uint32 repeats);
 
@@ -69,8 +70,14 @@ private:
     typedef std::unordered_map<ObjectGuid, ElunaEventProcessor> ProcessorMap;
     ProcessorMap processorMap;
     ElunaEventProcessor globalProcessor;
+    Eluna* owner;
 
 public:
+    EventMgr(Eluna* eluna) : owner(eluna)
+    {
+        ASSERT(eluna);
+    }
+
     void DeleteAll();
 
     void Delete(ObjectGuid const& guid, int funcref);
