@@ -35,6 +35,7 @@ Eluna::ScriptList Eluna::lua_scripts;
 Eluna::ScriptList Eluna::lua_extensions;
 std::string Eluna::lua_folderpath;
 std::string Eluna::lua_requirepath;
+Eluna::InstanceHolder Eluna::instances;
 Eluna* Eluna::GEluna = NULL;
 bool Eluna::reload = false;
 bool Eluna::initialized = false;
@@ -54,7 +55,8 @@ void Eluna::Initialize()
     initialized = true;
 
     // Create global eluna
-    GEluna = new Eluna();
+    GEluna = new Eluna(nullptr);
+    GEluna->RunScripts();
 }
 
 void Eluna::Uninitialize()
@@ -94,6 +96,23 @@ void Eluna::LoadScriptPaths()
     ELUNA_LOG_DEBUG("[Eluna]: Loaded %u scripts in %u ms", uint32(lua_scripts.size() + lua_extensions.size()), ElunaUtil::GetTimeDiff(oldMSTime));
 }
 
+void Eluna::__ReloadEluna()
+{
+    // Remove all timed events
+    eventMgr->DeleteAll();
+
+    // Close lua
+    CloseLua();
+
+    // Open new lua and libaraies
+    OpenLua();
+
+    // Run scripts from loaded paths
+    RunScripts();
+
+    reload = false;
+}
+
 void Eluna::_ReloadEluna()
 {
     LOCK_ELUNA;
@@ -101,38 +120,20 @@ void Eluna::_ReloadEluna()
 
     eWorld->SendServerMessage(SERVER_MSG_STRING, "Reloading Eluna...");
 
-    // Remove all timed events
-    sEluna->eventMgr->SetStates(LUAEVENT_STATE_ERASE);
-
-    // Close lua
-    sEluna->CloseLua();
-
     // Reload script paths
     LoadScriptPaths();
 
-    // Open new lua and libaraies
-    sEluna->OpenLua();
-
-    // Run scripts from laoded paths
-    sEluna->RunScripts();
-
-#ifdef TRINITY
-    // Re initialize creature AI restoring C++ AI or applying lua AI
-    {
-        HashMapHolder<Creature>::MapType const m = ObjectAccessor::GetCreatures();
-        for (HashMapHolder<Creature>::MapType::const_iterator iter = m.begin(); iter != m.end(); ++iter)
-            if (iter->second->IsInWorld())
-                iter->second->AIM_Initialize();
-    }
-#endif
+    for (auto&& e : instances.GetMap())
+        e->__ReloadEluna();
 
     reload = false;
 }
 
-Eluna::Eluna() :
+Eluna::Eluna(Map* map) :
 event_level(0),
 push_counter(0),
 enabled(false),
+owner(map),
 
 L(NULL),
 eventMgr(NULL),
@@ -164,11 +165,17 @@ CreatureUniqueBindings(NULL)
 
     // Set event manager. Must be after setting sEluna
     // on multithread have a map of state pointers and here insert this pointer to the map and then save a pointer of that pointer to the EventMgr
-    eventMgr = new EventMgr(&Eluna::GEluna);
+    eventMgr = new EventMgr();
+
+    instances.Add(this);
 }
 
 Eluna::~Eluna()
 {
+    ASSERT(IsInitialized());
+
+    instances.Remove(this);
+
     CloseLua();
 
     delete eventMgr;
@@ -421,7 +428,6 @@ static bool ScriptPathComparator(const LuaScript& first, const LuaScript& second
 
 void Eluna::RunScripts()
 {
-    LOCK_ELUNA;
     if (!IsEnabled())
         return;
 

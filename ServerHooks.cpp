@@ -249,7 +249,7 @@ void Eluna::OnWorldUpdate(uint32 diff)
             _ReloadEluna();
     }
 
-    eventMgr->globalProcessor->Update(diff);
+    eventMgr->UpdateGlobal(diff);
 
     START_HOOK(WORLD_EVENT_ON_UPDATE);
     Push(diff);

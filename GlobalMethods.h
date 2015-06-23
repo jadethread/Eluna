@@ -1298,7 +1298,7 @@ namespace LuaGlobalFunctions
         int functionRef = luaL_ref(L, LUA_REGISTRYINDEX);
         if (functionRef != LUA_REFNIL && functionRef != LUA_NOREF)
         {
-            E->eventMgr->globalProcessor->AddEvent(functionRef, delay, repeats);
+            E->eventMgr->AddGlobalEvent(functionRef, delay, repeats);
             Eluna::Push(L, functionRef);
         }
         return 1;
@@ -1308,35 +1308,22 @@ namespace LuaGlobalFunctions
      * Removes a global timed event specified by ID.
      *
      * @param int eventId : event Id to remove
-     * @param bool all_Events = false : remove from all events, not just global
      */
     int RemoveEventById(Eluna* E, lua_State* L)
     {
         int eventId = Eluna::CHECKVAL<int>(L, 1);
-        bool all_Events = Eluna::CHECKVAL<bool>(L, 1, false);
 
-        // not thread safe
-        if (all_Events)
-            E->eventMgr->SetState(eventId, LUAEVENT_STATE_ABORT);
-        else
-            E->eventMgr->globalProcessor->SetState(eventId, LUAEVENT_STATE_ABORT);
+        E->eventMgr->DeleteGlobal(eventId);
         return 0;
     }
 
     /**
      * Removes all global timed events.
      *
-     * @param bool all_Events = false : remove all events, not just global
      */
     int RemoveEvents(Eluna* E, lua_State* L)
     {
-        bool all_Events = Eluna::CHECKVAL<bool>(L, 1, false);
-
-        // not thread safe
-        if (all_Events)
-            E->eventMgr->SetStates(LUAEVENT_STATE_ABORT);
-        else
-            E->eventMgr->globalProcessor->SetStates(LUAEVENT_STATE_ABORT);
+        E->eventMgr->DeleteGlobal();
         return 0;
     }
 

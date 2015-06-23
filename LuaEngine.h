@@ -10,6 +10,8 @@
 #include "Common.h"
 #include "SharedDefines.h"
 #include "DBCEnums.h"
+#include <mutex>
+#include <unordered_set>
 
 #include "Group.h"
 #include "Item.h"
@@ -84,6 +86,7 @@ typedef VehicleInfo Vehicle;
 #endif
 
 struct lua_State;
+class Eluna;
 class EventMgr;
 class ElunaObject;
 template<typename T> class ElunaTemplate;
@@ -116,6 +119,27 @@ public:
     typedef ACE_Guard<LockType> Guard;
 #endif
 
+    class InstanceHolder
+    {
+    private:
+        // typedef std::mutex LockType;
+        // typedef std::lock_guard<LockType> WriteGuard;
+        // LockType _lock;
+        std::unordered_set<Eluna*> objs;
+    public:
+        std::unordered_set<Eluna*> const & GetMap() const { return objs; }
+        void Add(Eluna* E)
+        {
+            LOCK_ELUNA;
+            objs.insert(E);
+        }
+        void Remove(Eluna* E)
+        {
+            LOCK_ELUNA;
+            objs.erase(E);
+        }
+    };
+
 private:
     static bool reload;
     static bool initialized;
@@ -130,14 +154,15 @@ private:
     // lua path variable for require() function
     static std::string lua_requirepath;
 
+    static InstanceHolder instances;
+
     uint32 event_level;
     // When a hook pushes arguments to be passed to event handlers
     //   this is used to keep track of how many arguments were pushed.
     uint8 push_counter;
     bool enabled;
 
-    Eluna();
-    ~Eluna();
+    Map* owner;
 
     // Prevent copy
     Eluna(Eluna const&);
@@ -151,7 +176,9 @@ private:
     void InvalidateObjects();
 
     // Use ReloadEluna() to make eluna reload
-    // This is called on world update to reload eluna
+    // This is called on _ReloadEluna to reload eluna
+    void __ReloadEluna();
+    // This is called on world update to reload elunas
     static void _ReloadEluna();
     static void LoadScriptPaths();
     static void GetScripts(std::string path);
@@ -211,9 +238,10 @@ public:
     static void Initialize();
     static void Uninitialize();
     // This function is used to make eluna reload
-    static void ReloadEluna() { LOCK_ELUNA; reload = true; }
     static LockType& GetLock() { return lock; };
-    static bool IsInitialized() { return initialized; }
+    static void ReloadEluna() { LOCK_ELUNA; reload = true; }
+    static bool ShouldReload() { LOCK_ELUNA; return reload; }
+    static bool IsInitialized() { LOCK_ELUNA; return initialized; }
 
     // Static pushes, can be used by anything, including methods.
     static void Push(lua_State* luastate); // nil
@@ -239,10 +267,11 @@ public:
         ElunaTemplate<T>::Push(luastate, ptr);
     }
 
+    Eluna(Map* map);
+    ~Eluna();
+
     void RunScripts();
-    bool ShouldReload() const { return reload; }
-    bool IsEnabled() const { return enabled && IsInitialized(); }
-    bool HasLuaState() const { return L != NULL; }
+    bool IsEnabled() const { return enabled; }
     int Register(lua_State* L, uint8 reg, uint32 entry, uint64 guid, uint32 instanceId, uint32 event_id, int functionRef, uint32 shots);
 
     // Non-static pushes, to be used in hooks.
