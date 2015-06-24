@@ -17,6 +17,10 @@ extern "C"
 #include "ElunaUtility.h"
 #include "SharedDefines.h"
 
+enum ttt
+{
+};
+
 class ElunaGlobal
 {
 public:
@@ -178,57 +182,9 @@ public:
         lua_pushvalue(E->L, methods);
         lua_setfield(E->L, metatable, "__newindex");
 
-        // make new indexes saved to methods
-        lua_pushcfunction(E->L, Add);
-        lua_setfield(E->L, metatable, "__add");
-
-        // make new indexes saved to methods
-        lua_pushcfunction(E->L, Substract);
-        lua_setfield(E->L, metatable, "__sub");
-
-        // make new indexes saved to methods
-        lua_pushcfunction(E->L, Multiply);
-        lua_setfield(E->L, metatable, "__mul");
-
-        // make new indexes saved to methods
-        lua_pushcfunction(E->L, Divide);
-        lua_setfield(E->L, metatable, "__div");
-
-        // make new indexes saved to methods
-        lua_pushcfunction(E->L, Mod);
-        lua_setfield(E->L, metatable, "__mod");
-
-        // make new indexes saved to methods
-        lua_pushcfunction(E->L, Pow);
-        lua_setfield(E->L, metatable, "__pow");
-
-        // make new indexes saved to methods
-        lua_pushcfunction(E->L, UnaryMinus);
-        lua_setfield(E->L, metatable, "__unm");
-
-        // make new indexes saved to methods
-        lua_pushcfunction(E->L, Concat);
-        lua_setfield(E->L, metatable, "__concat");
-
-        // make new indexes saved to methods
-        lua_pushcfunction(E->L, Length);
-        lua_setfield(E->L, metatable, "__len");
-
-        // make new indexes saved to methods
+        // enable comparing values
         lua_pushcfunction(E->L, Equal);
         lua_setfield(E->L, metatable, "__eq");
-
-        // make new indexes saved to methods
-        lua_pushcfunction(E->L, Less);
-        lua_setfield(E->L, metatable, "__lt");
-
-        // make new indexes saved to methods
-        lua_pushcfunction(E->L, LessOrEqual);
-        lua_setfield(E->L, metatable, "__le");
-
-        // make new indexes saved to methods
-        lua_pushcfunction(E->L, Call);
-        lua_setfield(E->L, metatable, "__call");
 
         // special method to get the object type
         lua_pushcfunction(E->L, GetType);
@@ -278,31 +234,28 @@ public:
             return 1;
         }
 
-        //if (!manageMemory)
-        //{
-            lua_getglobal(L, ELUNA_OBJECT_STORE);
-            ASSERT(lua_istable(L, -1));
-            lua_pushfstring(L, "%p", obj);
-            lua_gettable(L, -2);
-            if (ElunaObject* elunaObj = Eluna::CHECKTYPE(L, -1, tname, false))
-            {
-                // set userdata valid
-                elunaObj->SetValid(true);
+        lua_getglobal(L, ELUNA_OBJECT_STORE);
+        ASSERT(lua_istable(L, -1));
+        lua_pushfstring(L, "%p", obj);
+        lua_gettable(L, -2);
+        if (ElunaObject* elunaObj = Eluna::CHECKTYPE(L, -1, tname, false))
+        {
+            // set userdata valid
+            elunaObj->SetValid(true);
 
-                // remove userdata_table, leave userdata
-                lua_remove(L, -2);
-                return 1;
-            }
-            lua_remove(L, -1);
-            // left userdata_table in stack
-        //}
+            // remove userdata_table, leave userdata
+            lua_remove(L, -2);
+            return 1;
+        }
+        lua_remove(L, -1);
+        // left userdata_table in stack
 
         // Create new userdata
         ElunaObject** ptrHold = static_cast<ElunaObject**>(lua_newuserdata(L, sizeof(ElunaObject*)));
         if (!ptrHold)
         {
             ELUNA_LOG_ERROR("%s could not create new userdata", tname);
-            lua_pop(L, 2 /*manageMemory ? 1 : 2*/);
+            lua_pop(L, 2);
             lua_pushnil(L);
             return 1;
         }
@@ -313,19 +266,16 @@ public:
         if (!lua_istable(L, -1))
         {
             ELUNA_LOG_ERROR("%s missing metatable", tname);
-            lua_pop(L, 3 /*manageMemory ? 2 : 3*/);
+            lua_pop(L, 3);
             lua_pushnil(L);
             return 1;
         }
         lua_setmetatable(L, -2);
 
-        //if (!manageMemory)
-        //{
-            lua_pushfstring(L, "%p", obj);
-            lua_pushvalue(L, -2);
-            lua_settable(L, -4);
-            lua_remove(L, -2);
-        //}
+        lua_pushfstring(L, "%p", obj);
+        lua_pushvalue(L, -2);
+        lua_settable(L, -4);
+        lua_remove(L, -2);
         return 1;
     }
 
@@ -334,31 +284,6 @@ public:
         ElunaObject* elunaObj = Eluna::CHECKTYPE(L, narg, tname, error);
         if (!elunaObj)
             return NULL;
-
-        //if (!manageMemory)
-        //{
-        //    // Check pointer validity
-        //    lua_rawgeti(L, LUA_REGISTRYINDEX, sEluna->userdata_table);
-        //    lua_pushfstring(L, "%p", (*ptrHold)->GetObj());
-        //    lua_gettable(L, -2);
-        //    lua_remove(L, -2);
-        //    bool valid = lua_isuserdata(L, -1) != 0;
-        //    lua_remove(L, -1);
-        //    if (!valid)
-        //    {
-        //        char buff[256];
-        //        snprintf(buff, 256, "%s expected, got pointer to nonexisting object (%s). This should never happen", tname, luaL_typename(L, narg));
-        //        if (error)
-        //        {
-        //            luaL_argerror(L, narg, buff);
-        //        }
-        //        else
-        //        {
-        //            ELUNA_LOG_ERROR("%s", buff);
-        //        }
-        //        return NULL;
-        //    }
-        //}
 
         if (!elunaObj->IsValid())
         {
@@ -433,21 +358,11 @@ public:
         return 1;
     }
 
-    static int ArithmeticError(lua_State* L) { return luaL_error(L, "attempt to perform arithmetic on a %s value", tname); }
-    static int CompareError(lua_State* L) { return luaL_error(L, "attempt to compare %s", tname); }
-    static int Add(lua_State* L) { return ArithmeticError(L); }
-    static int Substract(lua_State* L) { return ArithmeticError(L); }
-    static int Multiply(lua_State* L) { return ArithmeticError(L); }
-    static int Divide(lua_State* L) { return ArithmeticError(L); }
-    static int Mod(lua_State* L) { return ArithmeticError(L); }
-    static int Pow(lua_State* L) { return ArithmeticError(L); }
-    static int UnaryMinus(lua_State* L) { return ArithmeticError(L); }
-    static int Concat(lua_State* L) { return luaL_error(L, "attempt to concatenate a %s value", tname); }
-    static int Length(lua_State* L) { return luaL_error(L, "attempt to get length of a %s value", tname); }
-    static int Equal(lua_State* L) { Eluna::Push(L, Eluna::CHECKOBJ<T>(L, 1) == Eluna::CHECKOBJ<T>(L, 2)); return 1; }
-    static int Less(lua_State* L) { return CompareError(L); }
-    static int LessOrEqual(lua_State* L) { return CompareError(L); }
-    static int Call(lua_State* L) { return luaL_error(L, "attempt to call a %s value", tname); }
+    static int Equal(lua_State* L)
+    {
+        Eluna::Push(L, Eluna::CHECKOBJ<T>(L, 1) == Eluna::CHECKOBJ<T>(L, 2));
+        return 1;
+    }
 };
 
 #endif
