@@ -50,6 +50,9 @@ extern "C" {
 #define MAR_MAGIC 0x8e
 #define SEEN_IDX  3
 
+// Lua 5.3 int64 support hack
+#define MAR_TINT LUA_NUMTAGS
+
 typedef struct mar_Buffer {
     size_t size;
     size_t seek;
@@ -107,6 +110,8 @@ static void mar_encode_value(lua_State *L, mar_Buffer *buf, int val, size_t *idx
 {
     size_t l;
     int val_type = lua_type(L, val);
+    if (val_type == LUA_TNUMBER && lua_isinteger(L, -1))
+        val_type = MAR_TINT;
     lua_pushvalue(L, val);
 
     buf_write(L, (const char*)&val_type, MAR_CHR, buf);
@@ -125,6 +130,11 @@ static void mar_encode_value(lua_State *L, mar_Buffer *buf, int val, size_t *idx
     case LUA_TNUMBER: {
         lua_Number num_val = lua_tonumber(L, -1);
         buf_write(L, (const char*)&num_val, MAR_I64, buf);
+        break;
+    }
+    case MAR_TINT: {
+        lua_Integer int_val = lua_tointeger(L, -1);
+        buf_write(L, (const char*)&int_val, MAR_I64, buf);
         break;
     }
     case LUA_TTABLE: {
@@ -185,8 +195,7 @@ static void mar_encode_value(lua_State *L, mar_Buffer *buf, int val, size_t *idx
         }
         break;
     }
-    case LUA_TFUNCTION:
-    case LUA_TUSERDATA:
+    case LUA_TNONE:
     case LUA_TNIL: break;
     default:
         luaL_error(L, "invalid value type (%s)", lua_typename(L, val_type));
@@ -225,6 +234,10 @@ static void mar_decode_value
         break;
     case LUA_TNUMBER:
         lua_pushnumber(L, *(lua_Number*)*p);
+        mar_incr_ptr(MAR_I64);
+        break;
+    case MAR_TINT:
+        lua_pushinteger(L, *(lua_Integer*)*p);
         mar_incr_ptr(MAR_I64);
         break;
     case LUA_TSTRING:
