@@ -140,6 +140,12 @@ public:
         }
     };
 
+    class MsgQueue
+    {
+    private:
+    public:
+    };
+
 private:
     static bool reload;
     static bool initialized;

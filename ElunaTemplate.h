@@ -17,8 +17,13 @@ extern "C"
 #include "ElunaUtility.h"
 #include "SharedDefines.h"
 
-enum ttt
+enum ElunaEnvironments
 {
+    ENV_NONE,
+    ENV_MAP,    // For current map only
+    ENV_WORLD,  // For world state only
+    ENV_BOTH,   // For world and map
+    ENV_MAX
 };
 
 class ElunaGlobal
@@ -26,6 +31,7 @@ class ElunaGlobal
 public:
     struct ElunaRegister
     {
+        ElunaEnvironments env;
         const char* name;
         int(*mfunc)(Eluna*, lua_State*);
     };
@@ -120,6 +126,7 @@ private:
 template<typename T>
 struct ElunaRegister
 {
+    ElunaEnvironments env;
     const char* name;
     int(*mfunc)(Eluna*, lua_State*, T*);
 };
