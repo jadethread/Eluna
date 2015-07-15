@@ -37,7 +37,7 @@ bool Eluna::OnAddonMessage(Player* sender, uint32 type, std::string& msg, Player
     Push(type);
     const char* c_msg = msg.c_str();
     Push(strtok((char*)c_msg, "\t")); // prefix
-    Push(strtok(NULL, "")); // msg
+    Push(strtok(nullptr, "")); // msg
     if (receiver)
         Push(receiver);
     else if (guild)
@@ -301,7 +301,7 @@ void Eluna::OnPlayerLeave(Map* map, Player* player)
 
 void Eluna::OnUpdate(Map* map, uint32 diff)
 {
-    eventMgr->UpdateGlobal(diff);
+    map->GetEluna()->eventMgr->UpdateGlobal(diff);
 
     START_HOOK(MAP_EVENT_ON_UPDATE);
     Push(map);

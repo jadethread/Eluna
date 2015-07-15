@@ -28,7 +28,7 @@ namespace LuaQuery
 
     /* BOOLEAN */
     /**
-     * Returns `true` if the specified column of the current row is `NULL`, otherwise `false`.
+     * Returns `true` if the specified column of the current row is `nullptr`, otherwise `false`.
      *
      * @param uint32 column
      * @return bool isNull
@@ -317,7 +317,7 @@ namespace LuaQuery
                     case MYSQL_TYPE_LONG:
                     case MYSQL_TYPE_FLOAT:
                     case MYSQL_TYPE_DOUBLE:
-                        Eluna::Push(L, strtod(str, NULL));
+                        Eluna::Push(L, strtod(str, nullptr));
                         break;
                     default:
                         Eluna::Push(L, str);

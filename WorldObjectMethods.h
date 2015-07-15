@@ -160,7 +160,7 @@ namespace LuaWorldObject
     {
         float range = Eluna::CHECKVAL<float>(L, 2, SIZE_OF_GRIDS);
 
-        Unit* target = NULL;
+        Unit* target = nullptr;
         ElunaUtil::WorldObjectInRangeCheck checker(true, obj, range, TYPEMASK_PLAYER);
 #ifndef TRINITY
         MaNGOS::UnitLastSearcher<ElunaUtil::WorldObjectInRangeCheck> searcher(target, checker);
@@ -187,7 +187,7 @@ namespace LuaWorldObject
         float range = Eluna::CHECKVAL<float>(L, 2, SIZE_OF_GRIDS);
         uint32 entry = Eluna::CHECKVAL<uint32>(L, 3, 0);
 
-        GameObject* target = NULL;
+        GameObject* target = nullptr;
         ElunaUtil::WorldObjectInRangeCheck checker(true, obj, range, TYPEMASK_GAMEOBJECT, entry);
 #ifndef TRINITY
         MaNGOS::GameObjectLastSearcher<ElunaUtil::WorldObjectInRangeCheck> searcher(target, checker);
@@ -214,7 +214,7 @@ namespace LuaWorldObject
         float range = Eluna::CHECKVAL<float>(L, 2, SIZE_OF_GRIDS);
         uint32 entry = Eluna::CHECKVAL<uint32>(L, 3, 0);
 
-        Creature* target = NULL;
+        Creature* target = nullptr;
         ElunaUtil::WorldObjectInRangeCheck checker(true, obj, range, TYPEMASK_UNIT, entry);
 #ifndef TRINITY
         MaNGOS::CreatureLastSearcher<ElunaUtil::WorldObjectInRangeCheck> searcher(target, checker);
@@ -362,7 +362,7 @@ namespace LuaWorldObject
         obj->GetPosition(x, y, z);
         ElunaUtil::WorldObjectInRangeCheck checker(true, obj, range, type, entry, hostile);
 
-        WorldObject* target = NULL;
+        WorldObject* target = nullptr;
 #ifndef TRINITY
         MaNGOS::WorldObjectLastSearcher<ElunaUtil::WorldObjectInRangeCheck> searcher(target, checker);
         Cell::VisitAllObjects(obj, searcher, range);

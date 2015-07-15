@@ -108,7 +108,7 @@ void EventMgr::Update(uint32 diff, WorldObject* obj)
 
 void EventMgr::UpdateGlobal(uint32 diff)
 {
-    globalProcessor.Update(diff, owner, NULL);
+    globalProcessor.Update(diff, owner, nullptr);
 }
 
 void EventMgr::AddEvent(ObjectGuid guid, int funcRef, uint32 delay, uint32 repeats)

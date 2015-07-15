@@ -209,25 +209,25 @@ namespace LuaMap
         switch (GUID_HIPART(guid))
         {
             case HIGHGUID_PLAYER:
-                Eluna::Push(L, sObjectAccessor->GetObjectInMap(ObjectGuid(guid), map, (Player*)NULL));
+                Eluna::Push(L, sObjectAccessor->GetObjectInMap(ObjectGuid(guid), map, (Player*)nullptr));
                 break;
             case HIGHGUID_TRANSPORT:
             case HIGHGUID_MO_TRANSPORT:
             case HIGHGUID_GAMEOBJECT:
-                Eluna::Push(L, sObjectAccessor->GetObjectInMap(ObjectGuid(guid), map, (GameObject*)NULL));
+                Eluna::Push(L, sObjectAccessor->GetObjectInMap(ObjectGuid(guid), map, (GameObject*)nullptr));
                 break;
             case HIGHGUID_VEHICLE:
             case HIGHGUID_UNIT:
-                Eluna::Push(L, sObjectAccessor->GetObjectInMap(ObjectGuid(guid), map, (Creature*)NULL));
+                Eluna::Push(L, sObjectAccessor->GetObjectInMap(ObjectGuid(guid), map, (Creature*)nullptr));
                 break;
             case HIGHGUID_PET:
-                Eluna::Push(L, sObjectAccessor->GetObjectInMap(ObjectGuid(guid), map, (Pet*)NULL));
+                Eluna::Push(L, sObjectAccessor->GetObjectInMap(ObjectGuid(guid), map, (Pet*)nullptr));
                 break;
             case HIGHGUID_DYNAMICOBJECT:
-                Eluna::Push(L, sObjectAccessor->GetObjectInMap(ObjectGuid(guid), map, (DynamicObject*)NULL));
+                Eluna::Push(L, sObjectAccessor->GetObjectInMap(ObjectGuid(guid), map, (DynamicObject*)nullptr));
                 break;
             case HIGHGUID_CORPSE:
-                Eluna::Push(L, sObjectAccessor->GetObjectInMap(ObjectGuid(guid), map, (Corpse*)NULL));
+                Eluna::Push(L, sObjectAccessor->GetObjectInMap(ObjectGuid(guid), map, (Corpse*)nullptr));
                 break;
             default:
                 break;
@@ -270,6 +270,49 @@ namespace LuaMap
             map->SetWeather(zoneId, (WeatherType)weatherType, grade, false);
 #endif
         return 0;
+    }
+
+    /**
+     * Returns a table with current [Player]s on the map
+     *
+     *     enum TeamId
+     *     {
+     *         TEAM_ALLIANCE = 0,
+     *         TEAM_HORDE = 1,
+     *         TEAM_NEUTRAL = 2
+     *     };
+     *
+     * @param [TeamId] team = TEAM_NEUTRAL : optional check team of the player. Neutral means either team
+     * @return table players
+     */
+    int GetPlayers(Eluna* /*E*/, lua_State* L, Map* map)
+    {
+        uint32 team = Eluna::CHECKVAL<uint32>(L, 2, TEAM_NEUTRAL);
+
+        lua_newtable(L);
+        int tbl = lua_gettop(L);
+        uint32 i = 0;
+
+        Map::PlayerList const& players = map->GetPlayers();
+        for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+        {
+#ifndef TRINITY
+            Player* player = itr->getSource();
+#else
+            Player* player = itr->GetSource();
+#endif
+            if (!player || !player->GetSession())
+                continue;
+            if (team >= TEAM_NEUTRAL || player->GetTeamId() == team)
+            {
+                Eluna::Push(L, ++i);
+                Eluna::Push(L, player);
+                lua_settable(L, tbl);
+            }
+        }
+
+        lua_settop(L, tbl);
+        return 1;
     }
 };
 #endif

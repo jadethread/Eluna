@@ -1205,9 +1205,9 @@ namespace LuaCreature
         uint32 dataGuidLow = Eluna::CHECKVAL<uint32>(L, 3, 0);
 
 #ifndef TRINITY
-        creature->UpdateEntry(entry, ALLIANCE, dataGuidLow ? eObjectMgr->GetCreatureData(dataGuidLow) : NULL);
+        creature->UpdateEntry(entry, ALLIANCE, dataGuidLow ? eObjectMgr->GetCreatureData(dataGuidLow) : nullptr);
 #else
-        creature->UpdateEntry(entry, dataGuidLow ? eObjectMgr->GetCreatureData(dataGuidLow) : NULL);
+        creature->UpdateEntry(entry, dataGuidLow ? eObjectMgr->GetCreatureData(dataGuidLow) : nullptr);
 #endif
         return 0;
     }

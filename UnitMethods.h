@@ -2124,7 +2124,7 @@ namespace LuaUnit
         Item* castItem = Eluna::CHECKOBJ<Item>(L, 8, false);
         uint64 originalCaster = Eluna::CHECKVAL<uint64>(L, 9, 0);
 
-        unit->CastCustomSpell(target, spell, has_bp0 ? &bp0 : NULL, has_bp1 ? &bp1 : NULL, has_bp2 ? &bp2 : NULL, triggered, castItem, NULL, ObjectGuid(originalCaster));
+        unit->CastCustomSpell(target, spell, has_bp0 ? &bp0 : nullptr, has_bp1 ? &bp1 : nullptr, has_bp2 ? &bp2 : nullptr, triggered, castItem, nullptr, ObjectGuid(originalCaster));
         return 0;
     }
     
@@ -2217,7 +2217,7 @@ namespace LuaUnit
                 eff == SPELL_EFFECT_APPLY_AURA ||
                 eff == SPELL_EFFECT_PERSISTENT_AREA_AURA)
             {
-                Aura* aur = CreateAura(spellInfo, SpellEffIndex(i), NULL, holder, target);
+                Aura* aur = CreateAura(spellInfo, SpellEffIndex(i), nullptr, holder, target);
                 holder->AddAura(aur, SpellEffIndex(i));
             }
         }
@@ -2368,7 +2368,7 @@ namespace LuaUnit
         // flat melee damage without resistence/etc reduction
         if (school == MAX_SPELL_SCHOOL)
         {
-            unit->DealDamage(target, damage, NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, durabilityloss);
+            unit->DealDamage(target, damage, nullptr, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, nullptr, durabilityloss);
 #ifdef TRINITY
             unit->SendAttackStateUpdate(HITINFO_AFFECTS_VICTIM, target, 1, SPELL_SCHOOL_MASK_NORMAL, damage, 0, 0, VICTIMSTATE_HIT, 0);
 #else
@@ -2381,7 +2381,7 @@ namespace LuaUnit
 
 #ifdef TRINITY
         if (Unit::IsDamageReducedByArmor(schoolmask))
-            damage = unit->CalcArmorReducedDamage(target, damage, NULL, BASE_ATTACK);
+            damage = unit->CalcArmorReducedDamage(target, damage, nullptr, BASE_ATTACK);
 #else
         if (schoolmask & SPELL_SCHOOL_MASK_NORMAL)
             damage = unit->CalcArmorReducedDamage(target, damage);
@@ -2404,7 +2404,7 @@ namespace LuaUnit
                 damage -= absorb + resist;
 
             unit->DealDamageMods(target, damage, &absorb);
-            unit->DealDamage(target, damage, NULL, DIRECT_DAMAGE, schoolmask, NULL, false);
+            unit->DealDamage(target, damage, nullptr, DIRECT_DAMAGE, schoolmask, nullptr, false);
 #ifdef TRINITY
             unit->SendAttackStateUpdate(HITINFO_AFFECTS_VICTIM, target, 1, schoolmask, damage, absorb, resist, VICTIMSTATE_HIT, 0);
 #else
@@ -2455,7 +2455,7 @@ namespace LuaUnit
         bool durLoss = Eluna::CHECKVAL<bool>(L, 3, true);
 
 #ifndef TRINITY
-        unit->DealDamage(target, target->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, durLoss);
+        unit->DealDamage(target, target->GetHealth(), nullptr, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, nullptr, durLoss);
 #else
         unit->Kill(target, durLoss);
 #endif
@@ -2497,9 +2497,9 @@ namespace LuaUnit
         }
 
 #ifdef TRINITY
-        unit->AddThreat(victim, threat, (SpellSchoolMask)schoolMask, spell ? sSpellMgr->GetSpellInfo(spell) : NULL);
+        unit->AddThreat(victim, threat, (SpellSchoolMask)schoolMask, spell ? sSpellMgr->GetSpellInfo(spell) : nullptr);
 #else
-        unit->AddThreat(victim, threat, false, (SpellSchoolMask)schoolMask, spell ? sSpellStore.LookupEntry(spell) : NULL);
+        unit->AddThreat(victim, threat, false, (SpellSchoolMask)schoolMask, spell ? sSpellStore.LookupEntry(spell) : nullptr);
 #endif
         return 0;
     }

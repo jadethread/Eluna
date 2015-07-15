@@ -177,6 +177,10 @@ public:
         lua_pushcfunction(E->L, ToString);
         lua_setfield(E->L, metatable, "__tostring");
 
+        // concatenation
+        lua_pushcfunction(E->L, Concat);
+        lua_setfield(E->L, metatable, "__concat");
+
         // garbage collecting
         lua_pushcfunction(E->L, CollectGarbage);
         lua_setfield(E->L, metatable, "__gc");
@@ -288,9 +292,11 @@ public:
 
     static T* Check(lua_State* L, int narg, bool error = true)
     {
+        ASSERT(tname);
+
         ElunaObject* elunaObj = Eluna::CHECKTYPE(L, narg, tname, error);
         if (!elunaObj)
-            return NULL;
+            return nullptr;
 
         if (!elunaObj->IsValid())
         {
@@ -304,7 +310,7 @@ public:
             {
                 ELUNA_LOG_ERROR("%s", buff);
             }
-            return NULL;
+            return nullptr;
         }
         return static_cast<T*>(elunaObj->GetObj());
     }
@@ -362,6 +368,14 @@ public:
     {
         T* obj = Eluna::CHECKOBJ<T>(L, 1, true); // get self
         lua_pushfstring(L, "%s: (%p)", tname, obj);
+        return 1;
+    }
+
+    static int Concat(lua_State* L)
+    {
+        luaL_tolstring(L, 1, nullptr);
+        luaL_tolstring(L, 2, nullptr);
+        lua_concat(L, 2);
         return 1;
     }
 

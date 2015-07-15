@@ -15,6 +15,7 @@ extern "C"
 #include "ElunaIncludes.h"
 #include "ElunaTemplate.h"
 #include "ElunaUtility.h"
+#include "LuaVal.h"
 
 // Method includes
 #include "GlobalMethods.h"
@@ -36,6 +37,7 @@ extern "C"
 #include "CorpseMethods.h"
 #include "VehicleMethods.h"
 #include "BattleGroundMethods.h"
+#include "uint64Methods.h"
 
 ElunaGlobal::ElunaRegister GlobalMethods[] =
 {
@@ -69,6 +71,7 @@ ElunaGlobal::ElunaRegister GlobalMethods[] =
     { ENV_NONE, "ClearServerEvents", &LuaGlobalFunctions::ClearServerEvents },
 
     // Getters
+    { ENV_BOTH, "GetMap", &LuaGlobalFunctions::GetMap },
     { ENV_BOTH, "GetLuaEngine", &LuaGlobalFunctions::GetLuaEngine },
     { ENV_BOTH, "GetCoreName", &LuaGlobalFunctions::GetCoreName },
     { ENV_BOTH, "GetCoreVersion", &LuaGlobalFunctions::GetCoreVersion },
@@ -77,8 +80,7 @@ ElunaGlobal::ElunaRegister GlobalMethods[] =
     { ENV_NONE, "GetPlayerByGUID", &LuaGlobalFunctions::GetPlayerByGUID },
     { ENV_NONE, "GetPlayerByName", &LuaGlobalFunctions::GetPlayerByName },
     { ENV_BOTH, "GetGameTime", &LuaGlobalFunctions::GetGameTime },
-    { ENV_NONE, "GetPlayersInWorld", &LuaGlobalFunctions::GetPlayersInWorld },
-    { ENV_NONE, "GetPlayersInMap", &LuaGlobalFunctions::GetPlayersInMap },
+    { ENV_WORLD, "GetPlayersInWorld", &LuaGlobalFunctions::GetPlayersInWorld },
     { ENV_NONE, "GetGuildByName", &LuaGlobalFunctions::GetGuildByName },
     { ENV_NONE, "GetGuildByLeaderGUID", &LuaGlobalFunctions::GetGuildByLeaderGUID },
     { ENV_NONE, "GetPlayerCount", &LuaGlobalFunctions::GetPlayerCount },
@@ -97,7 +99,7 @@ ElunaGlobal::ElunaRegister GlobalMethods[] =
     { ENV_BOTH, "bit_or", &LuaGlobalFunctions::bit_or },
     { ENV_BOTH, "bit_and", &LuaGlobalFunctions::bit_and },
     { ENV_BOTH, "GetItemLink", &LuaGlobalFunctions::GetItemLink },
-    { ENV_NONE, "GetMapById", &LuaGlobalFunctions::GetMapById },
+    { ENV_WORLD, "GetMapById", &LuaGlobalFunctions::GetMapById },
     { ENV_BOTH, "GetCurrTime", &LuaGlobalFunctions::GetCurrTime },
     { ENV_BOTH, "GetTimeDiff", &LuaGlobalFunctions::GetTimeDiff },
     { ENV_BOTH, "PrintInfo", &LuaGlobalFunctions::PrintInfo },
@@ -136,8 +138,12 @@ ElunaGlobal::ElunaRegister GlobalMethods[] =
     { ENV_NONE, "RemoveCorpse", &LuaGlobalFunctions::RemoveCorpse },
     { ENV_NONE, "ConvertCorpseForPlayer", &LuaGlobalFunctions::ConvertCorpseForPlayer },
     { ENV_NONE, "RemoveOldCorpses", &LuaGlobalFunctions::RemoveOldCorpses },
+    { ENV_BOTH, "NewUint64", &LuaGlobalFunctions::NewUint64 },
+    { ENV_BOTH, "StateChannelSend", &LuaGlobalFunctions::StateChannelSend },
+    { ENV_BOTH, "StateChannelRegister", &LuaGlobalFunctions::StateChannelRegister },
+    { ENV_BOTH, "StateChannelUnregister", &LuaGlobalFunctions::StateChannelUnregister },
 
-    { ENV_NONE, NULL, NULL },
+    { ENV_NONE, nullptr, nullptr },
 };
 
 ElunaRegister<Object> ObjectMethods[] =
@@ -179,7 +185,7 @@ ElunaRegister<Object> ObjectMethods[] =
     { ENV_NONE, "ToCorpse", &LuaObject::ToCorpse },                     // :ToCorpse()
     { ENV_NONE, "RemoveFlag", &LuaObject::RemoveFlag },                 // :RemoveFlag(index, flag)
 
-    { ENV_NONE, NULL, NULL },
+    { ENV_NONE, nullptr, nullptr },
 };
 
 ElunaRegister<WorldObject> WorldObjectMethods[] =
@@ -225,7 +231,7 @@ ElunaRegister<WorldObject> WorldObjectMethods[] =
     { ENV_NONE, "RemoveEventById", &LuaWorldObject::RemoveEventById },
     { ENV_NONE, "RemoveEvents", &LuaWorldObject::RemoveEvents },
 
-    { ENV_NONE, NULL, NULL },
+    { ENV_NONE, nullptr, nullptr },
 };
 
 ElunaRegister<Unit> UnitMethods[] =
@@ -417,7 +423,7 @@ ElunaRegister<Unit> UnitMethods[] =
     { ENV_NONE, "DealHeal", &LuaUnit::DealHeal },                               // :DealDamage(target, amount, spell[, critical]) - Heals target by given amount. This will be logged as being healed by spell as critical if true.
     { ENV_NONE, "AddThreat", &LuaUnit::AddThreat },
 
-    { ENV_NONE, NULL, NULL },
+    { ENV_NONE, nullptr, nullptr },
 };
 
 ElunaRegister<Player> PlayerMethods[] =
@@ -740,7 +746,7 @@ ElunaRegister<Player> PlayerMethods[] =
     { ENV_NONE, "ClearHonorInfo", &LuaPlayer::ClearHonorInfo },                                       // :ClearHonorInfo() - Clear Player Honor Info
 #endif
 
-    { ENV_NONE, NULL, NULL },
+    { ENV_NONE, nullptr, nullptr },
 };
 
 ElunaRegister<Creature> CreatureMethods[] =
@@ -844,7 +850,7 @@ ElunaRegister<Creature> CreatureMethods[] =
     { ENV_NONE, "MoveWaypoint", &LuaCreature::MoveWaypoint },
     { ENV_NONE, "UpdateEntry", &LuaCreature::UpdateEntry },
 
-    { ENV_NONE, NULL, NULL },
+    { ENV_NONE, nullptr, nullptr },
 };
 
 ElunaRegister<GameObject> GameObjectMethods[] =
@@ -874,7 +880,7 @@ ElunaRegister<GameObject> GameObjectMethods[] =
     { ENV_NONE, "Respawn", &LuaGameObject::Respawn },
     { ENV_NONE, "SaveToDB", &LuaGameObject::SaveToDB },
 
-    { ENV_NONE, NULL, NULL },
+    { ENV_NONE, nullptr, nullptr },
 };
 
 ElunaRegister<Item> ItemMethods[] =
@@ -950,7 +956,7 @@ ElunaRegister<Item> ItemMethods[] =
     // Other
     { ENV_NONE, "SaveToDB", &LuaItem::SaveToDB },                           // :SaveToDB() - Saves to database
 
-    { ENV_NONE, NULL, NULL },
+    { ENV_NONE, nullptr, nullptr },
 };
 
 ElunaRegister<Aura> AuraMethods[] =
@@ -973,7 +979,7 @@ ElunaRegister<Aura> AuraMethods[] =
     // Other
     { ENV_BOTH, "Remove", &LuaAura::Remove },
 
-    { ENV_NONE, NULL, NULL },
+    { ENV_NONE, nullptr, nullptr },
 };
 
 ElunaRegister<Spell> SpellMethods[] =
@@ -998,7 +1004,7 @@ ElunaRegister<Spell> SpellMethods[] =
     { ENV_NONE, "Cast", &LuaSpell::Cast },
     { ENV_NONE, "Finish", &LuaSpell::Finish },
 
-    { ENV_NONE, NULL, NULL },
+    { ENV_NONE, nullptr, nullptr },
 };
 
 ElunaRegister<Quest> QuestMethods[] =
@@ -1021,7 +1027,7 @@ ElunaRegister<Quest> QuestMethods[] =
 #endif
     { ENV_BOTH, "IsRepeatable", &LuaQuest::IsRepeatable },
 
-    { ENV_NONE, NULL, NULL },
+    { ENV_NONE, nullptr, nullptr },
 };
 
 ElunaRegister<Group> GroupMethods[] =
@@ -1059,7 +1065,7 @@ ElunaRegister<Group> GroupMethods[] =
     // { "ConvertToLFG", &LuaGroup::ConvertToLFG },                 // :ConvertToLFG() - Converts the group to an LFG group
     { ENV_NONE, "ConvertToRaid", &LuaGroup::ConvertToRaid },
 
-    { ENV_NONE, NULL, NULL },
+    { ENV_NONE, nullptr, nullptr },
 };
 
 ElunaRegister<Guild> GuildMethods[] =
@@ -1096,7 +1102,7 @@ ElunaRegister<Guild> GuildMethods[] =
     { ENV_NONE, "WithdrawBankMoney", &LuaGuild::WithdrawBankMoney },    // :WithdrawBankMoney(money) - Withdraws money from the guild bank
 #endif
 
-    { ENV_NONE, NULL, NULL },
+    { ENV_NONE, nullptr, nullptr },
 };
 
 #ifndef CLASSIC
@@ -1115,7 +1121,7 @@ ElunaRegister<Vehicle> VehicleMethods[] =
     { ENV_NONE, "AddPassenger", &LuaVehicle::AddPassenger },            // :AddPassenger(passenger, seatId) - Adds a vehicle passenger
     { ENV_NONE, "RemovePassenger", &LuaVehicle::RemovePassenger },      // :RemovePassenger(passenger) - Removes the passenger from the vehicle
 
-    { ENV_NONE, NULL, NULL },
+    { ENV_NONE, nullptr, nullptr },
 };
 #endif
 #endif
@@ -1141,7 +1147,7 @@ ElunaRegister<ElunaQuery> QueryMethods[] =
     { ENV_BOTH, "GetString", &LuaQuery::GetString },                    // :GetString(column) - returns the value of a string column, always returns a string
     { ENV_BOTH, "IsNull", &LuaQuery::IsNull },                          // :IsNull(column) - returns true if the column is null
 
-    { ENV_NONE, NULL, NULL },
+    { ENV_NONE, nullptr, nullptr },
 };
 
 ElunaRegister<WorldPacket> PacketMethods[] =
@@ -1177,7 +1183,7 @@ ElunaRegister<WorldPacket> PacketMethods[] =
     { ENV_BOTH, "WriteFloat", &LuaPacket::WriteFloat },                 // :WriteFloat(val) - Writes a float value
     { ENV_BOTH, "WriteDouble", &LuaPacket::WriteDouble },               // :WriteDouble(val) - Writes a double value
 
-    { ENV_NONE, NULL, NULL },
+    { ENV_NONE, nullptr, nullptr },
 };
 
 ElunaRegister<Map> MapMethods[] =
@@ -1186,6 +1192,7 @@ ElunaRegister<Map> MapMethods[] =
     { ENV_BOTH, "GetName", &LuaMap::GetName },                          // :GetName() - Returns the map's name UNDOCUMENTED
     { ENV_BOTH, "GetDifficulty", &LuaMap::GetDifficulty },              // :GetDifficulty() - Returns the map's difficulty UNDOCUMENTED
     { ENV_BOTH, "GetInstanceId", &LuaMap::GetInstanceId },              // :GetInstanceId() - Returns the map's instance ID UNDOCUMENTED
+    { ENV_BOTH, "GetPlayers", &LuaMap::GetPlayers },
     { ENV_BOTH, "GetPlayerCount", &LuaMap::GetPlayerCount },            // :GetPlayerCount() - Returns the amount of players on map except GM's UNDOCUMENTED
     { ENV_BOTH, "GetMapId", &LuaMap::GetMapId },                        // :GetMapId() - Returns the map's ID UNDOCUMENTED
     { ENV_BOTH, "GetAreaId", &LuaMap::GetAreaId },                      // :GetAreaId(x, y, z) - Returns the map's area ID based on coords UNDOCUMENTED
@@ -1207,7 +1214,7 @@ ElunaRegister<Map> MapMethods[] =
 #endif
     { ENV_BOTH, "IsRaid", &LuaMap::IsRaid },                            // :IsRaid() - Returns the true if the map is a raid map, else false UNDOCUMENTED
 
-    { ENV_NONE, NULL, NULL },
+    { ENV_NONE, nullptr, nullptr },
 };
 
 ElunaRegister<Corpse> CorpseMethods[] =
@@ -1219,12 +1226,12 @@ ElunaRegister<Corpse> CorpseMethods[] =
     { ENV_NONE, "SaveToDB", &LuaCorpse::SaveToDB },
     { ENV_NONE, "DeleteBonesFromWorld", &LuaCorpse::DeleteBonesFromWorld },
 
-    { ENV_NONE, NULL, NULL }
+    { ENV_NONE, nullptr, nullptr }
 };
 
 ElunaRegister<AuctionHouseEntry> AuctionMethods[] =
 {
-    { ENV_NONE, NULL, NULL }
+    { ENV_NONE, nullptr, nullptr }
 };
 
 ElunaRegister<BattleGround> BattleGroundMethods[] =
@@ -1251,10 +1258,26 @@ ElunaRegister<BattleGround> BattleGroundMethods[] =
 
     // Setters
 
-    { ENV_NONE, NULL, NULL }
+    { ENV_NONE, nullptr, nullptr }
 };
 
-template<typename T> const char* ElunaTemplate<T>::tname = NULL;
+ElunaRegister<uint64> uint64Methods[] =
+{
+    { ENV_NONE, "__add", &Luauint64::__add },
+    { ENV_NONE, "__sub", &Luauint64::__sub },
+    { ENV_NONE, "__mul", &Luauint64::__mul },
+    { ENV_NONE, "__div", &Luauint64::__div },
+    { ENV_NONE, "__mod", &Luauint64::__mod },
+    { ENV_NONE, "__pow", &Luauint64::__pow },
+    { ENV_NONE, "__eq", &Luauint64::__eq },
+    { ENV_NONE, "__lt", &Luauint64::__lt },
+    { ENV_NONE, "__le", &Luauint64::__le },
+    { ENV_NONE, "__tostring", &Luauint64::__tostring },
+
+    { ENV_NONE, nullptr, nullptr }
+};
+
+template<typename T> const char* ElunaTemplate<T>::tname = nullptr;
 template<typename T> bool ElunaTemplate<T>::manageMemory = false;
 
 #if (!defined(TBC) && !defined(CLASSIC))
@@ -1348,4 +1371,7 @@ void RegisterFunctions(Eluna* E)
 
     ElunaTemplate<ElunaQuery>::Register(E, "ElunaQuery", true);
     ElunaTemplate<ElunaQuery>::SetMethods(E, QueryMethods);
+
+    ElunaTemplate<uint64>::Register(E, "uint64", true);
+    ElunaTemplate<uint64>::SetMethods(E, uint64Methods);
 }

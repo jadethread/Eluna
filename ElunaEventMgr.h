@@ -48,7 +48,7 @@ public:
 
     ElunaEventProcessor() : m_time(0) { }
 
-    // obj can be NULL for global events
+    // obj can be nullptr for global events
     void Update(uint32 diff, Eluna* E, WorldObject* obj);
     void AddEvent(LuaEvent const& luaEvent);
     void AddEvent(int funcRef, uint32 delay, uint32 repeats);

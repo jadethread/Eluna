@@ -15,6 +15,19 @@
 namespace LuaGlobalFunctions
 {
     /**
+     * Returns the current Lua state's owner map.
+     *
+     * Returns nil if the state is not bound to a map.
+     *
+     * @return [Map] owner
+     */
+    int GetMap(Eluna* E, lua_State* L)
+    {
+        Eluna::Push(L, E->owner);
+        return 1;
+    }
+
+    /**
      * Returns Lua engine's name.
      *
      * Always returns "ElunaEngine" on Eluna.
@@ -180,58 +193,6 @@ namespace LuaGlobalFunctions
     }
 
     /**
-     * Returns a table with all the current [Player]s in a map
-     *
-     *     enum TeamId
-     *     {
-     *         TEAM_ALLIANCE = 0,
-     *         TEAM_HORDE = 1,
-     *         TEAM_NEUTRAL = 2
-     *     };
-     *
-     * @param uint32 mapId : the [Map] entry ID
-     * @param uint32 instanceId : the instance ID to search in the map
-     * @param [TeamId] team : optional check team of the [Player], Alliance, Horde or Neutral (All)
-     * @return table mapPlayers
-     */
-    int GetPlayersInMap(Eluna* /*E*/, lua_State* L)
-    {
-        uint32 mapID = Eluna::CHECKVAL<uint32>(L, 1);
-        uint32 instanceID = Eluna::CHECKVAL<uint32>(L, 2, 0);
-        uint32 team = Eluna::CHECKVAL<uint32>(L, 3, TEAM_NEUTRAL);
-
-        lua_newtable(L);
-        Map* map = eMapMgr->FindMap(mapID, instanceID);
-        if (!map)
-            return 1;
-
-        int tbl = lua_gettop(L);
-        uint32 i = 0;
-
-        Map::PlayerList const& players = map->GetPlayers();
-        for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
-        {
-#ifndef TRINITY
-            Player* player = itr->getSource();
-#else
-            Player* player = itr->GetSource();
-#endif
-            if (!player)
-                continue;
-            if (player->GetSession() && (team >= TEAM_NEUTRAL || player->GetTeamId() == team))
-            {
-                ++i;
-                Eluna::Push(L, i);
-                Eluna::Push(L, player);
-                lua_settable(L, tbl);
-            }
-        }
-
-        lua_settop(L, tbl);
-        return 1;
-    }
-
-    /**
      * Returns a [Guild] by name.
      *
      * @param string name
@@ -364,10 +325,10 @@ namespace LuaGlobalFunctions
      * Low GUID is an ID to distinct the objects of the same type.
      *
      * [Player] and [Creature] for example can have the same low GUID but not GUID.
-     * 
+     *
      * On TrinityCore all low GUIDs are different for all objects of the same type.
      * For example creatures in instances are assigned new GUIDs when the Map is created.
-     * 
+     *
      * On MaNGOS and cMaNGOS low GUIDs are unique only on the same map.
      * For example creatures in instances use the same low GUID assigned for that spawn in the database.
      * This is why to identify a creature you have to know the instanceId and low GUID. See [Map:GetIntstanceId]
@@ -1557,7 +1518,7 @@ namespace LuaGlobalFunctions
             }
             else
             {
-                TempSummon* creature = map->SummonCreature(entry, pos, NULL, durorresptime);
+                TempSummon* creature = map->SummonCreature(entry, pos, nullptr, durorresptime);
                 if (!creature)
                 {
                     Eluna::Push(L);
@@ -2187,6 +2148,16 @@ namespace LuaGlobalFunctions
     }
 
     /**
+     * S
+     */
+    int SendStateMessage(Eluna* /*E*/, lua_State* /*L*/)
+    {
+        eObjectAccessor->RemoveOldCorpses();
+        // errrr;
+        return 0;
+    }
+
+    /**
      * Returns `true` if the bag and slot is a valid inventory position, otherwise `false`.
      *
      * Some commonly used combinations:
@@ -2306,7 +2277,7 @@ namespace LuaGlobalFunctions
         int top = lua_gettop(L);
         for (int i = 1; i <= top; ++i)
         {
-            oss << luaL_tolstring(L, i, NULL);
+            oss << luaL_tolstring(L, i, nullptr);
             lua_pop(L, 1);
         }
         return oss.str();
@@ -2758,6 +2729,86 @@ namespace LuaGlobalFunctions
             E->ServerEventBindings->Clear(Key((Hooks::ServerEvents)event_type));
         }
         return 0;
+    }
+
+    /**
+     * Returns an [uint64] object representing an `uint64` value.
+     *
+     * The value by default is 0, but can be initialized to something else by passing a number or uint64 as a string.
+     *
+     * @proto value = ()
+     * @proto value = (i)
+     * @proto value = (u)
+     * @proto value = (str)
+     * @param int64 i
+     * @param uint64 u
+     * @param string str : uint64 number in a string, can be hex
+     * @return uint64 value
+     */
+    int NewUint64(Eluna* /*E*/, lua_State* L)
+    {
+        if (lua_isstring(L, 1))
+            Eluna::Push(L, strtoull(Eluna::CHECKVAL<const char*>(L, 1), NULL, 0));
+        else
+            Eluna::Push(L, Eluna::CHECKVAL<uint64>(L, 1, 0));
+        return 1;
+    }
+
+    /**
+     * Sends a message to the state messaging system
+     *
+     * Sent messages can be read by any Eluna state registered to listen to the channel
+     *
+     * @param string channel : channel name to send the message to
+     * @param ... vararg : variable amount of nil, bool, string, number, uint64, acyclic table containing types in this list
+     */
+    int StateChannelSend(Eluna* /*E*/, lua_State* L)
+    {
+        std::string channel = Eluna::CHECKVAL<std::string>(L, 1);
+        Eluna::msgque->Add(L, 2, lua_gettop(L), channel);
+        return 0;
+    }
+
+    /**
+     * Registers to listen to a channel any lua state can send messages to
+     *
+     * @param string channel : channel name to register to
+     * @return bool registered : false if already registered to channel
+     */
+    int StateChannelRegister(Eluna* E, lua_State* L)
+    {
+        std::string channel = Eluna::CHECKVAL<std::string>(L, 1);
+
+        if (E->stateChannels.find(channel) != E->stateChannels.end())
+        {
+            Eluna::Push(L, false);
+            return 1;
+        }
+
+        E->stateChannels.insert(channel);
+        Eluna::Push(L, true);
+        return 1;
+    }
+
+    /**
+     * Unregisters from a state channel registered by RegisterStateChannel
+     *
+     * @param string channel : channel name to unregister from
+     * @return bool unregistered : false if already unregistered from channel
+     */
+    int StateChannelUnregister(Eluna* E, lua_State* L)
+    {
+        std::string channel = Eluna::CHECKVAL<std::string>(L, 1);
+
+        if (E->stateChannels.find(channel) == E->stateChannels.end())
+        {
+            Eluna::Push(L, false);
+            return 1;
+        }
+
+        E->stateChannels.erase(channel);
+        Eluna::Push(L, true);
+        return 1;
     }
 }
 #endif

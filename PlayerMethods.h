@@ -349,7 +349,7 @@ namespace LuaPlayer
      */
     int IsInGroup(Eluna* /*E*/, lua_State* L, Player* player)
     {
-        Eluna::Push(L, (player->GetGroup() != NULL));
+        Eluna::Push(L, (player->GetGroup() != nullptr));
         return 1;
     }
 
@@ -2065,7 +2065,7 @@ namespace LuaPlayer
         uint32 muteseconds = Eluna::CHECKVAL<uint32>(L, 2);
         /*const char* reason = luaL_checkstring(E, 2);*/ // Mangos does not have a reason field in database.
 
-        time_t muteTime = time(NULL) + muteseconds;
+        time_t muteTime = time(nullptr) + muteseconds;
         player->GetSession()->m_muteTime = muteTime;
         std::ostringstream oss;
         oss << "UPDATE account SET mutetime = " << muteTime << " WHERE id = " << player->GetSession()->GetAccountId();
@@ -2686,7 +2686,7 @@ namespace LuaPlayer
 
         // ok, normal (creature/GO starting) quest
         if (player->CanAddQuest(quest, true))
-            player->AddQuestAndCheckCompletion(quest, NULL);
+            player->AddQuestAndCheckCompletion(quest, nullptr);
 #else
         // check item starting quest (it can work incorrectly if added without item in inventory)
         for (uint32 id = 0; id < sItemStorage.GetMaxEntry(); ++id)
@@ -2702,7 +2702,7 @@ namespace LuaPlayer
         // ok, normal (creature/GO starting) quest
         if (player->CanAddQuest(quest, true))
         {
-            player->AddQuest(quest, NULL);
+            player->AddQuest(quest, nullptr);
 
             if (player->CanCompleteQuest(entry))
                 player->CompleteQuest(entry);

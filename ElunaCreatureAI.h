@@ -47,7 +47,7 @@ struct ElunaCreatureAI : ScriptedAI
         }
     }
 
-    //Called for reaction at enter to combat if not in combat yet (enemy can be NULL)
+    //Called for reaction at enter to combat if not in combat yet (enemy can be nullptr)
     //Called at creature aggro either by MoveInLOS or Attack Start
     void EnterCombat(Unit* target) override
     {
